@@ -164,7 +164,7 @@ class WC_Gateway_Paypal_Request {
 			$line_item_args['tax_cart'] = $order->get_total_tax();
 
 			if ( $order->get_total_discount() > 0 ) {
-				$line_item_args['discount_amount_cart'] = round( $order->get_total_discount(), 2 );
+				$line_item_args['discount_amount_cart'] = round( $order->get_total_discount(), wc_get_price_decimals() );
 			}
 
 		/**
@@ -176,8 +176,8 @@ class WC_Gateway_Paypal_Request {
 
 			$this->delete_line_items();
 
-			$this->add_line_item( $this->get_order_item_names( $order ), 1, number_format( $order->get_total() - round( $order->get_total_shipping() + $order->get_shipping_tax(), 2 ), 2, '.', '' ), $order->get_order_number() );
-			$this->add_line_item( sprintf( __( 'Shipping via %s', 'woocommerce' ), ucwords( $order->get_shipping_method() ) ), 1, number_format( $order->get_total_shipping() + $order->get_shipping_tax(), 2, '.', '' ) );
+			$this->add_line_item( $this->get_order_item_names( $order ), 1, number_format( $order->get_total() - round( $order->get_total_shipping() + $order->get_shipping_tax(), wc_get_price_decimals() ), wc_get_price_decimals(), '.', '' ), $order->get_order_number() );
+			$this->add_line_item( sprintf( __( 'Shipping via %s', 'woocommerce' ), ucwords( $order->get_shipping_method() ) ), 1, number_format( $order->get_total_shipping() + $order->get_shipping_tax(), wc_get_price_decimals(), '.', '' ) );
 
 			$line_item_args = $this->get_line_items();
 		}
@@ -258,12 +258,12 @@ class WC_Gateway_Paypal_Request {
 		}
 
 		// Shipping Cost item - paypal only allows shipping per item, we want to send shipping for the order
-		if ( $order->get_total_shipping() > 0 && ! $this->add_line_item( sprintf( __( 'Shipping via %s', 'woocommerce' ), $order->get_shipping_method() ), 1, round( $order->get_total_shipping(), 2 ) ) ) {
+		if ( $order->get_total_shipping() > 0 && ! $this->add_line_item( sprintf( __( 'Shipping via %s', 'woocommerce' ), $order->get_shipping_method() ), 1, $order->get_total_shipping() ) ) {
 			return false;
 		}
 
 		// Check for mismatched totals
-		if ( wc_format_decimal( $calculated_total + $order->get_total_tax() + round( $order->get_total_shipping(), 2 ) - round( $order->get_total_discount(), 2 ), 2 ) != wc_format_decimal( $order->get_total(), 2 ) ) {
+		if ( wc_format_decimal( $calculated_total + $order->get_total_tax() + round( $order->get_total_shipping(), wc_get_price_decimals() ) - round( $order->get_total_discount(), wc_get_price_decimals() ), wc_get_price_decimals() ) != wc_format_decimal( $order->get_total(), wc_get_price_decimals() ) ) {
 			return false;
 		}
 
@@ -287,7 +287,7 @@ class WC_Gateway_Paypal_Request {
 
 		$this->line_items[ 'item_name_' . $index ]   = html_entity_decode( wc_trim_string( $item_name, 127 ), ENT_NOQUOTES, 'UTF-8' );
 		$this->line_items[ 'quantity_' . $index ]    = $quantity;
-		$this->line_items[ 'amount_' . $index ]      = $amount;
+		$this->line_items[ 'amount_' . $index ]      = round( $amount, wc_get_price_decimals() );
 		$this->line_items[ 'item_number_' . $index ] = $item_number;
 
 		return true;
